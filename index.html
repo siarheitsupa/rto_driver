@@ -2,6 +2,113 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <title>Firebase App</title>
+</head>
+<body>
+    <h1>Тест Firebase</h1>
+
+    <h2>Регистрация</h2>
+    <input type="email" id="signup-email" placeholder="Email">
+    <input type="password" id="signup-password" placeholder="Пароль">
+    <button id="signup-button">Зарегистрироваться</button>
+
+    <h2>Вход</h2>
+    <input type="email" id="login-email" placeholder="Email">
+    <input type="password" id="login-password" placeholder="Пароль">
+    <button id="login-button">Войти</button>
+    <hr>
+
+    <h2>Сохранить данные (только после входа)</h2>
+    <input type="text" id="data-input" placeholder="Введите данные">
+    <button id="save-data-button">Сохранить в Firestore</button>
+
+    <script type="module">
+        // ШАГ 1: Импортируем нужные функции из SDK Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        // ШАГ 2: Вставьте сюда ваш объект firebaseConfig, который вы скопировали ранее
+        const firebaseConfig = {
+          apiKey: "ВАШ_API_KEY",
+          authDomain: "ВАШ_AUTH_DOMAIN",
+          projectId: "ВАШ_PROJECT_ID",
+          storageBucket: "ВАШ_STORAGE_BUCKET",
+          messagingSenderId: "ВАШ_SENDER_ID",
+          appId: "ВАШ_APP_ID"
+        };
+
+        // ШАГ 3: Инициализируем Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app); // Получаем сервис аутентификации
+        const db = getFirestore(app); // Получаем сервис Firestore
+
+        // ШАГ 4: Добавляем обработчики событий
+        const signupButton = document.getElementById('signup-button');
+        const loginButton = document.getElementById('login-button');
+        const saveDataButton = document.getElementById('save-data-button');
+
+        // Регистрация нового пользователя
+        signupButton.addEventListener('click', () => {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    // Успешная регистрация
+                    const user = userCredential.user;
+                    alert(`Пользователь ${user.email} успешно зарегистрирован!`);
+                })
+                .catch((error) => {
+                    // Обработка ошибок
+                    alert(`Ошибка регистрации: ${error.message}`);
+                });
+        });
+
+        // Вход пользователя
+        loginButton.addEventListener('click', () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    alert(`Пользователь ${user.email} успешно вошел в систему!`);
+                })
+                .catch((error) => {
+                    alert(`Ошибка входа: ${error.message}`);
+                });
+        });
+        
+        // Сохранение данных в Firestore
+        saveDataButton.addEventListener('click', async () => {
+            const dataToSave = document.getElementById('data-input').value;
+            const user = auth.currentUser; // Проверяем, вошел ли пользователь
+
+            if (user) {
+                try {
+                    // Создаем ссылку на коллекцию 'user_data'
+                    const docRef = await addDoc(collection(db, "user_data"), {
+                        owner: user.uid, // Сохраняем ID пользователя, который создал запись
+                        text: dataToSave,
+                        createdAt: serverTimestamp() // Добавляем временную метку создания
+                    });
+                    alert(`Данные успешно сохранены с ID: ${docRef.id}`);
+                } catch (e) {
+                    alert(`Ошибка сохранения данных: ${e}`);
+                }
+            } else {
+                alert("Ошибка: вы должны войти в систему, чтобы сохранять данные!");
+            }
+        });
+
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tacho App: Режим труда и отдыха</title>
     <script src="https://cdn.tailwindcss.com"></script>
